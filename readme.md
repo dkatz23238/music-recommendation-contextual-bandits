@@ -11,6 +11,8 @@ python -m pip install sklearn numpy pandas
 
 Process wikipedia data to create a `Udf.csv` file.
 
+Without this step you will run into the following error: `FileNotFoundError: [Errno 2] No such file or directory: 'Udf.csv'`
+
 ```py
 python wiki_text.py
 ```

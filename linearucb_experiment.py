@@ -30,15 +30,15 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 
-use_wiki_data = True
-use_only_wiki_data = True
+use_wiki_data = False
+use_only_wiki_data = False
 center_data = False
 binarize_tags = False
 svd_tags = True
-svd_tags_components = 100
+svd_tags_components = 20
 
 # Top k artists
-k = 1500
+k = 1000
 # J experiments
 J = 150
 # H trials
