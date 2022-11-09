@@ -4,7 +4,7 @@ import numpy as np
 import random
 from time import perf_counter
 import os
-
+from sklearn.utils.extmath import randomized_svd
 
 if os.path.exists(".linucb"):
     with open(".linucb") as f:
@@ -32,6 +32,10 @@ class NpEncoder(json.JSONEncoder):
 
 use_wiki_data = True
 use_only_wiki_data = True
+center_data = False
+binarize_tags = False
+svd_tags = True
+svd_tags_components = 100
 
 # Top k artists
 k = 1500
@@ -48,7 +52,13 @@ def get_user_artist_list(U_pp: pd.DataFrame, user_id: int):
 A_v = (pd.read_csv(
     "./processed_data/artist_vectors.csv", encoding="utf-8").set_index("name")
     .astype(np.int8)
-)
+).apply(np.log1p)
+
+original_Av_columns = A_v.columns
+
+if binarize_tags:
+    A_v = (A_v > 0).astype(int)
+
 
 U_pp = (pd.read_csv(
     "./processed_data/user_play_pair.csv", encoding="utf-8").set_index("userID")
@@ -73,18 +83,25 @@ alpha = 1
 experiment_data = {}
 experiment_data["use_wiki_data"] = use_wiki_data
 experiment_data["use_only_wiki_data"] = use_only_wiki_data
+experiment_data["svd_tags"] = svd_tags
+experiment_data["center_data"] = center_data
+experiment_data["svd_tags_components"] = svd_tags_components
+experiment_data["binarize_tags"] = binarize_tags
+
+if center_data:
+    # Center design matrix
+    A_v = A_v - A_v.mean()
 
 
-if use_wiki_data:
+if svd_tags:
+    U, D, VT = randomized_svd(A_v, svd_tags_components)
+    A_v = pd.DataFrame(U, index=A_v.index)
+
+if use_wiki_data and not use_only_wiki_data:
     A_v = A_v.merge(Udf, right_index=True, left_index=True)
 
 if use_only_wiki_data:
     A_v = Udf
-
-
-# Center design matrix
-A_v = A_v - A_v.mean()
-
 
 for uid in user_ids[:J]:
 
@@ -131,11 +148,11 @@ for uid in user_ids[:J]:
 
         x_cand = X.iloc[nth_artist]
         reward = target[nth_artist]
-
+        x = x_cand
         # Bayesian Update rule
-        A = A + x_cand @ x_cand.T
-        # A = A + x_cand.values[:, None].dot(x_cand.values[:, None].T)
-        b = b + reward * x_cand
+        A = A + x @ x.T
+
+        b = b + reward * x
 
         seen.append(nth_artist)
         decision_sequence.append((X.index[nth_artist], reward))
@@ -156,3 +173,9 @@ for uid in user_ids[:J]:
 
 with open(f"linearucb_experiment_data_{rounds}.json", "w") as f:
     f.write(json.dumps(experiment_data,  cls=NpEncoder))
+
+
+component_interpretation_matrix = pd.DataFrame(
+    VT, columns=original_Av_columns).T
+
+component_interpretation_matrix.to_csv("component_interpretation_matrix.csv")

@@ -3,7 +3,9 @@ import numpy as np
 import glob
 
 runs = []
-meta_keys = ["use_wiki_data", "use_only_wiki_data"]
+
+meta_keys = ["use_wiki_data", "use_only_wiki_data",
+             "svd_tags", "center_data", "svd_tags_components", "binarize_tags"]
 
 for f in glob.glob("linearucb_experiment_data_*.json"):
     with open(f) as fhandle:
@@ -17,7 +19,7 @@ for f in glob.glob("linearucb_experiment_data_*.json"):
         ]
 
         for mk in meta_keys:
-            print(f"{mk} {run[mk]}")
+            print(f"{mk} {run.get(mk,None)}")
 
         r = round(sum(reward) / (35*150), 2)
         c = round(sum(control) / (35*150), 2)
