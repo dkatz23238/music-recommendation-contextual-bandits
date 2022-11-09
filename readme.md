@@ -2,6 +2,11 @@
 
 ![Alt text](britney_vs_madona.png "Title")
 
+## Dependencies
+
+```sh
+python -m pip install sklearn numpy pandas
+```
 ## Experimentation
 
 Process wikipedia data to create a `Udf.csv` file.
